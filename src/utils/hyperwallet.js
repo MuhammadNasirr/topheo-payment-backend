@@ -33,11 +33,14 @@ export const createBankAccount = ({
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject("Failed to create bank account");
+          reject({ status: "fail", message: "Failed to create bank account" });
         } else {
           debug("Bank account successfully created");
           debug(body);
-          resolve();
+          resolve({
+            status: "success",
+            message: "Bank Account Created",
+          });
         }
       }
     );
@@ -65,11 +68,11 @@ export const createPayment = ({
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject("Failed to create payment");
+          reject({ status: "fail", message: "Failed to create payment" });
         } else {
           debug("Payment successfully created");
           debug(body);
-          resolve();
+          resolve({ status: "fail", message: "Payment successfully created" });
         }
       }
     );
@@ -85,26 +88,27 @@ export const createTransferMethod = ({
   return new Promise((resolve, reject) => {
     debug({ userToken, jsonCacheToken });
 
-    try {
-      hyperwalletClient.createTransferMethod(
-        userToken,
-        jsonCacheToken,
-        transferMethodConfiguration,
-        function (errors, body) {
-          if (errors) {
-            debug(errors);
-            reject("Failed to create transfer method");
-          } else {
-            debug("Transfer method successfully created");
-            debug(body);
-            resolve();
-          }
+    hyperwalletClient.createTransferMethod(
+      userToken,
+      jsonCacheToken,
+      transferMethodConfiguration,
+      function (errors, body) {
+        if (errors) {
+          debug(errors);
+          reject({
+            status: "fail",
+            message: "Failed to create transfer method",
+          });
+        } else {
+          debug("Transfer method successfully created");
+          debug(body);
+          resolve({
+            status: "fail",
+            message: "Transfer method successfully created",
+          });
         }
-      );
-    } catch (error) {
-      debug(error);
-      throw error;
-    }
+      }
+    );
   });
 };
 
@@ -122,10 +126,10 @@ export const createUser = ({ clientId, firstName, lastName, email }) => {
       function (errors, body, res) {
         if (errors) {
           debug(errors);
-          reject("Create User Failed");
+          reject({ status: "fail", message: "Create User Failed" });
         } else {
           debug("Create User Response");
-          resolve(body);
+          resolve({ status: "success", data: body });
         }
       }
     );
@@ -141,11 +145,11 @@ export const getBankAccount = ({ userToken, bankAccountToken }) => {
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject("Failed to fetch bank account");
+          reject({ status: "fail", message: "Failed to fetch bank account" });
         } else {
           debug("Bank account successfully fetched");
           debug(body);
-          resolve(body);
+          resolve({ status: "success", data: body });
         }
       }
     );
@@ -158,10 +162,10 @@ export const getUser = ({ userToken }) => {
     hyperwalletClient.getUser(userToken, function (errors, body) {
       if (errors) {
         debug(errors);
-        reject("Get User Failed");
+        reject({ status: "fail", message: "Get User Failed" });
       } else {
         debug("Get User Response");
-        resolve(body);
+        resolve({ status: "success", data: body });
       }
     });
   });
@@ -176,11 +180,11 @@ export const listBalanceForUser = ({ userToken }) => {
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject("Fetching User balance Failed");
+          reject({ status: "fail", message: "Fetching User balance Failed" });
         } else {
           debug("User balance fetched successfully");
           debug(body);
-          resolve(body);
+          resolve({ status: "success", data: body });
         }
       }
     );
@@ -196,11 +200,14 @@ export const listBankAccounts = ({ userToken }) => {
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject("Fetching User bank accounts failed");
+          reject({
+            status: "fail",
+            message: "Fetching User bank accounts failed",
+          });
         } else {
           debug("User banks fetched successfully");
           debug(body);
-          resolve(body);
+          resolve({ status: "success", data: body });
         }
       }
     );
@@ -220,7 +227,8 @@ export const transferToBank = async ({
     bankAccountToken: transferMethodToken,
   });
 
-  if (!bankAccount) throw new Error("Invalid transfer method");
+  if (!bankAccount)
+    throw new Error({ status: "fail", message: "Invalid transfer method" });
 
   const transferData = {
     clientTransferId: uuidV4(),
@@ -299,7 +307,7 @@ export const transferToBank = async ({
 
   debug("commitTransferRes", commitTransferRes);
 
-  return true;
+  return { status: "success", message: "transfered" };
 };
 
 export const updateUser = ({
@@ -322,10 +330,10 @@ export const updateUser = ({
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject("Update User Failed");
+          reject({ status: "fail", message: "Update User Failed" });
         } else {
           debug("Update User Response", body);
-          resolve(body);
+          resolve({ status: "success", data: body });
         }
       }
     );
