@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as hyperController from "../controller/hyperwalletController";
+import * as braintreeController from "../controller/braintreeController";
 import authMiddleware from "../middlewares/AuthMiddleware";
 
 let protectedRouter = Router();
@@ -68,5 +69,24 @@ protectedRouter.put(
   authMiddleware,
   hyperController.updateUser
 );
+
+protectedRouter.post(
+  "braintree/customer",
+  authMiddleware,
+  braintreeController.createCustomer
+);
+protectedRouter.post(
+  "braintree/customer/find",
+  authMiddleware,
+  braintreeController.findCustomer
+);
+
+protectedRouter.post(
+  "braintree/token/generate",
+  authMiddleware,
+  braintreeController.generateToken
+);
+
+protectedRouter.post("braintree/pay", authMiddleware, braintreeController.pay);
 
 export { protectedRouter };
