@@ -125,8 +125,9 @@ export const createUser = ({ clientId, firstName, lastName, email }) => {
       },
       function (errors, body, res) {
         if (errors) {
+          console.log("HYPERWALLET USER ERROR", errors);
           debug(errors);
-          reject({ status: "fail", message: "Create User Failed" });
+          reject({ status: "fail", message: errors.message });
         } else {
           debug("Create User Response");
           resolve({ status: "success", data: body });

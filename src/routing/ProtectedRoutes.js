@@ -71,22 +71,15 @@ protectedRouter.put(
 );
 
 protectedRouter.post(
-  "braintree/customer",
+  "/checkout/start",
   authMiddleware,
-  braintreeController.createCustomer
-);
-protectedRouter.post(
-  "braintree/customer/find",
-  authMiddleware,
-  braintreeController.findCustomer
+  braintreeController.initializePaymentProcess
 );
 
 protectedRouter.post(
-  "braintree/token/generate",
+  "/checkout/pay",
   authMiddleware,
-  braintreeController.generateToken
+  braintreeController.processPaymentNonce
 );
-
-protectedRouter.post("braintree/pay", authMiddleware, braintreeController.pay);
 
 export { protectedRouter };

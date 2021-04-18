@@ -19,14 +19,16 @@ export const createCustomer = async ({ id, firstName, lastName, email }) => {
 
 export const findCustomer = async (id) => {
   try {
-    const c = await gateway.customer.find(id);
-    return c;
+    const customer = await gateway.customer.find(id);
+    console.log("braintree: Find Customer:::", customer);
+
+    return customer;
   } catch (error) {
-    console.log("braintree: Find Customer", error);
-    return false;
+    console.log("braintree: Find Customer Err:::", error);
+    return null;
   }
 };
-
+// gateway.customer.delete("j785mJAZowR1OD0UOrWFzEn1KGv1");
 export const generateToken = async (customerId) => {
   return await gateway.clientToken.generate({
     customerId,
