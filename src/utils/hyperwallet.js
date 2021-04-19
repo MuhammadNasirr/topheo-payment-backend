@@ -340,3 +340,8 @@ export const updateUser = ({
     );
   });
 };
+
+
+
+// Create user both hyperwallet and brain tree together
+//
