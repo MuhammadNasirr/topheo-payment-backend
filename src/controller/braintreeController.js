@@ -1,5 +1,8 @@
+import { ADMIN_FEE } from "../constants";
+import { env } from "../env";
 import * as braintree from "../utils/braintree";
 import { getUserById, Users } from "../utils/firebase";
+import * as hyperwallet from "../utils/hyperwallet";
 
 export const initializePaymentProcess = async (req, res, next) => {
   try {
@@ -35,7 +38,7 @@ export const initializePaymentProcess = async (req, res, next) => {
 
 export const processPaymentNonce = async (req, res, next) => {
   try {
-    const { amount, paymentNonce } = req.body;
+    const { amount, paymentNonce, riderId } = req.body;
     if (!amount || !paymentNonce) {
       throw {
         status: "fail",
@@ -51,6 +54,33 @@ export const processPaymentNonce = async (req, res, next) => {
         message: response.message,
       };
     }
+    let rider = await getUserById(riderId);
+    if (!rider.hyperwalletToken) {
+      let hyperwalletUser = await hyperwallet.createUser({
+        clientId: riderId,
+        email: rider.email,
+        firstName: rider.firstname,
+        lastName: rider.lastname,
+      });
+      let user = Users.child(riderId);
+      await user.update({
+        hyperwalletToken: "usr-024be52f-819d-458a-b0b2-e47543c5e997",
+      });
+      rider.hyperwalletToken = hyperwalletUser.token;
+    }
+
+    const amountToTransfer = parseFloat(amount) * ((100 - ADMIN_FEE) / 100);
+
+    console.log("HYPPERWALLET_PAYMENT", rider);
+    const payload = {
+      amount: amountToTransfer,
+      destinationToken: rider.hyperwalletToken,
+      currency: "USD",
+      programToken: env.hyperwallet.programToken,
+      purpose: "GP0005",
+    };
+    console.log("HYPERWALLET_PAYLOAD", payload);
+    await hyperwallet.createPayment(payload);
     res.status(200).json({
       status: "success",
       message: "Payment Processed successfully",

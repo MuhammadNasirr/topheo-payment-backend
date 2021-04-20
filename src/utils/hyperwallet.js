@@ -72,6 +72,7 @@ export const createPayment = ({
         } else {
           debug("Payment successfully created");
           debug(body);
+          console.log("HP.com", body);
           resolve({ status: "fail", message: "Payment successfully created" });
         }
       }
@@ -127,7 +128,7 @@ export const createUser = ({ clientId, firstName, lastName, email }) => {
         if (errors) {
           console.log("HYPERWALLET USER ERROR", errors);
           debug(errors);
-          reject({ status: "fail", message: errors.message });
+          reject({ status: "fail", message: errors[0].message });
         } else {
           debug("Create User Response");
           resolve({ status: "success", data: body });
@@ -340,8 +341,6 @@ export const updateUser = ({
     );
   });
 };
-
-
 
 // Create user both hyperwallet and brain tree together
 //
