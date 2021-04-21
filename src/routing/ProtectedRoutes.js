@@ -94,4 +94,10 @@ protectedRouter.get(
   braintreeController.getBankAccount
 );
 
+protectedRouter.get(
+  "/hyperwallet/token/:userId",
+  authMiddleware,
+  braintreeController.getAuthToken
+);
+
 export { protectedRouter };

@@ -104,6 +104,25 @@ export const createBankAccount = async (req, res, next) => {
   }
 };
 
+export const getAuthToken = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    let user = await getUserById(userId);
+    if (!user.hyperwalletToken) {
+      throw {
+        status: "fail",
+        message: "User Account does not Exist",
+      };
+    }
+    let token = await hyperwallet.getUserJwt(user.hyperwalletToken);
+    console.log(token, user.hyperwalletToken);
+    res.status(200).json({ status: "success", token: token.data.value });
+  } catch (error) {
+    console.log("paymentNonce Error::::", error);
+    res.status(400).json(error);
+  }
+};
+
 export const getBankAccount = async (req, res, next) => {
   try {
     const { userId } = req.params;
@@ -118,6 +137,7 @@ export const getBankAccount = async (req, res, next) => {
       userToken: user.hyperwalletToken,
       bankAccountToken: user.hyperwalletBankToken,
     });
+
     res.status(200).json({
       status: "success",
       bank,

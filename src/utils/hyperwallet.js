@@ -152,6 +152,15 @@ export const createUser = ({ clientId, firstName, lastName, email }) => {
         if (errors) {
           console.log("HYPERWALLET USER ERROR", errors);
           debug(errors);
+          let index = errors.findIndex(
+            (a) => a.code === "DUPLICATE_CLIENT_USER_ID"
+          );
+
+          if (index > -1) {
+            let userToken = errors[index].relatedResources[0];
+            resolve({ token: userToken });
+          }
+
           reject({ status: "fail", message: errors[0].message });
         } else {
           debug("Create User Response");
@@ -194,6 +203,24 @@ export const getUser = ({ userToken }) => {
         resolve({ status: "success", data: body });
       }
     });
+  });
+};
+
+export const getUserJwt = (userToken) => {
+  debug({ userToken });
+  return new Promise((resolve, reject) => {
+    hyperwalletClient.getAuthenticationToken(
+      userToken,
+      function (errors, body) {
+        if (errors) {
+          debug(errors);
+          reject({ status: "fail", message: "Authentication Failed" });
+        } else {
+          debug("Get User Response");
+          resolve({ status: "success", data: body });
+        }
+      }
+    );
   });
 };
 
