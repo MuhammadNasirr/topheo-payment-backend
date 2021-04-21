@@ -69,7 +69,7 @@ export const createPayment = ({
         if (errors) {
           debug(errors);
           console.log("CREATE PAYMENT ERR::", errors);
-          reject({ status: "fail", message: "Failed to create payment" });
+          reject({ status: "fail", message: errors[0].message });
         } else {
           debug("Payment successfully created");
           debug(body);
