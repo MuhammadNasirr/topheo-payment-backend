@@ -17,6 +17,15 @@ export const createBankAccount = ({
   branchId,
   transferMethodCurrency,
   transferMethodCountry,
+  postalCode,
+  stateProvince,
+  addressLine1,
+  city,
+  profileType,
+
+  country,
+  firstName,
+  lastName,
 }) => {
   debug({ userToken });
   return new Promise((resolve, reject) => {
@@ -29,13 +38,27 @@ export const createBankAccount = ({
         transferMethodCountry,
         transferMethodCurrency,
         type: "BANK_ACCOUNT",
+        postalCode,
+        stateProvince,
+        addressLine1,
+        city,
+        profileType,
+        country,
+        lastName,
+        firstName,
       },
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject({ status: "fail", message: "Failed to create bank account" });
+          console.log("BANK ERROR", errors);
+          reject({
+            status: "fail",
+            message: "Failed to created bank account",
+            errors: errors,
+          });
         } else {
           debug("Bank account successfully created");
+
           debug(body);
           resolve({
             status: "success",

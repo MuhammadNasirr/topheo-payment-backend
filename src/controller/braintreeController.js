@@ -36,13 +36,112 @@ export const initializePaymentProcess = async (req, res, next) => {
   }
 };
 
+export const createBankAccount = async (req, res, next) => {
+  try {
+    const {
+      userId,
+      bankAccountId,
+      bankAccountPurpose,
+      branchId,
+      transferMethodCurrency,
+      transferMethodCountry,
+      postalCode,
+      stateProvince,
+      address,
+      city,
+      profileType,
+      country,
+    } = req.body;
+
+    let user = await getUserById(userId);
+    console.log(user);
+    let customer = await braintree.createCustomer({
+      id: userId,
+      firstName: user.firstname,
+      lastName: user.lastname,
+      email: user.email,
+    });
+    if (!user.hyperwalletToken) {
+      let hyperwalletUser = await hyperwallet.createUser({
+        clientId: userId,
+        email: user.email,
+        firstName: user.firstname,
+        lastName: user.lastname,
+      });
+      user.hyperwalletToken = hyperwalletUser.token;
+    }
+    if (!user.hyperwalletBankToken) {
+      let bankToken = await hyperwallet.createBankAccount({
+        userToken: user.hyperwalletToken,
+        bankAccountId,
+        bankAccountPurpose,
+        branchId,
+        transferMethodCurrency,
+        transferMethodCountry,
+        postalCode,
+        stateProvince,
+        addressLine1: address,
+        city,
+        profileType,
+        country,
+        lastName: user.lastname,
+        firstName: user.firstname,
+      });
+      user.hyperwalletBankToken = bankToken.token;
+    }
+    let up = Users.child(userId);
+    await up.update({
+      hyperwalletToken: user.hyperwalletToken,
+      hyperwalletBankToken: user.hyperwalletBankToken,
+    });
+    res.status(200).json({
+      status: "success",
+      data: user,
+    });
+  } catch (error) {
+    console.log("paymentNonce Error::::", error);
+    res.status(400).json(error);
+  }
+};
+
+export const getBankAccount = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    let user = await getUserById(userId);
+    if (!user.hyperwalletToken || !user.hyperwalletBankToken) {
+      throw {
+        status: "fail",
+        message: "User or User Bank Account does not Exist",
+      };
+    }
+    let bank = await hyperwallet.getBankAccount({
+      userToken: user.hyperwalletToken,
+      bankAccountToken: user.hyperwalletBankToken,
+    });
+    res.status(200).json({
+      status: "success",
+      bank,
+    });
+  } catch (error) {
+    console.log("paymentNonce Error::::", error);
+    res.status(400).json(error);
+  }
+};
+
 export const processPaymentNonce = async (req, res, next) => {
   try {
-    const { amount, paymentNonce, riderId } = req.body;
+    const { amount, paymentNonce, riderId, currency } = req.body;
     if (!amount || !paymentNonce) {
       throw {
         status: "fail",
         message: "Amount or Payment Nonce not Provided",
+      };
+    }
+    let rider = await getUserById(riderId);
+    if (!rider.hyperwalletToken || !rider.hyperwalletBankToken) {
+      throw {
+        status: "fail",
+        message: "User or User Bank Account does not Exist",
       };
     }
     let response = await braintree.pay({ amount, paymentNonce });
@@ -54,28 +153,14 @@ export const processPaymentNonce = async (req, res, next) => {
         message: response.message,
       };
     }
-    let rider = await getUserById(riderId);
-    if (!rider.hyperwalletToken) {
-      let hyperwalletUser = await hyperwallet.createUser({
-        clientId: riderId,
-        email: rider.email,
-        firstName: rider.firstname,
-        lastName: rider.lastname,
-      });
-      let user = Users.child(riderId);
-      await user.update({
-        hyperwalletToken: "usr-024be52f-819d-458a-b0b2-e47543c5e997",
-      });
-      rider.hyperwalletToken = hyperwalletUser.token;
-    }
 
     const amountToTransfer = parseFloat(amount) * ((100 - ADMIN_FEE) / 100);
 
     console.log("HYPPERWALLET_PAYMENT", rider);
     const payload = {
       amount: amountToTransfer,
-      destinationToken: rider.hyperwalletToken,
-      currency: "USD",
+      destinationToken: rider.hyperwalletBankToken,
+      currency: currency,
       programToken: env.hyperwallet.programToken,
       purpose: "GP0005",
     };

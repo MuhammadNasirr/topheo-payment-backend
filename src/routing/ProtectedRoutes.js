@@ -82,4 +82,16 @@ protectedRouter.post(
   braintreeController.processPaymentNonce
 );
 
+protectedRouter.post(
+  "/bank/create",
+  authMiddleware,
+  braintreeController.createBankAccount
+);
+
+protectedRouter.get(
+  "/bank/:userId",
+  authMiddleware,
+  braintreeController.getBankAccount
+);
+
 export { protectedRouter };
