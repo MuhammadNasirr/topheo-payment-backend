@@ -9,6 +9,7 @@ export const firebase = admin.initializeApp({
 
 export const db = admin.database();
 export const Users = db.ref("Users");
+export const Orders = db.ref("Orders");
 
 // Attach an asynchronous callback to read the data at our posts reference
 export const getUserById = (id) => {

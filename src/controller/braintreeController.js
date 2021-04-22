@@ -1,7 +1,7 @@
 import { ADMIN_FEE } from "../constants";
 import { env } from "../env";
 import * as braintree from "../utils/braintree";
-import { getUserById, Users } from "../utils/firebase";
+import { getUserById, Users, Orders } from "../utils/firebase";
 import * as hyperwallet from "../utils/hyperwallet";
 
 export const initializePaymentProcess = async (req, res, next) => {
@@ -53,6 +53,9 @@ export const createBankAccount = async (req, res, next) => {
       country,
     } = req.body;
 
+    if (!userId) {
+      throw { status: "fail", message: "User ID missing" };
+    }
     let user = await getUserById(userId);
     console.log(user);
     let customer = await braintree.createCustomer({
@@ -107,6 +110,9 @@ export const createBankAccount = async (req, res, next) => {
 export const getAuthToken = async (req, res, next) => {
   try {
     const { userId } = req.params;
+    if (!userId) {
+      throw { status: "fail", message: "User ID missing" };
+    }
     let user = await getUserById(userId);
     if (!user.hyperwalletToken) {
       throw {
@@ -126,16 +132,19 @@ export const getAuthToken = async (req, res, next) => {
 export const getBankAccount = async (req, res, next) => {
   try {
     const { userId } = req.params;
+    if (!userId) {
+      throw { status: "fail", message: "User ID missing" };
+    }
     let user = await getUserById(userId);
+    console.log(user);
     if (!user.hyperwalletToken || !user.hyperwalletBankToken) {
       throw {
         status: "fail",
         message: "User or User Bank Account does not Exist",
       };
     }
-    let bank = await hyperwallet.getBankAccount({
+    let bank = await hyperwallet.listBankAccounts({
       userToken: user.hyperwalletToken,
-      bankAccountToken: user.hyperwalletBankToken,
     });
 
     res.status(200).json({
@@ -148,9 +157,71 @@ export const getBankAccount = async (req, res, next) => {
   }
 };
 
+export const getUserBalance = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      throw { status: "fail", message: "User ID missing" };
+    }
+    let user = await getUserById(userId);
+    if (!user.hyperwalletToken) {
+      throw {
+        status: "fail",
+        message: "User Account does not exist",
+      };
+    }
+    let balance = (
+      await hyperwallet.listBalanceForUser({
+        userToken: user.hyperwalletToken,
+      })
+    ).data.data;
+    console.log(balance);
+    res.status(200).json({ status: "success", balance });
+  } catch (error) {
+    console.log("Balance Error::::", error);
+    res.status(400).json(error);
+  }
+};
+
+export const transferToBank = async (req, res, next) => {
+  try {
+    const { userId, bankToken, amount } = req.body;
+    if (!userId) {
+      throw { status: "fail", message: "User ID missing" };
+    }
+    let user = await getUserById(userId);
+    if (!user.hyperwalletToken || !user.hyperwalletBankToken) {
+      throw {
+        status: "fail",
+        message: "User or User Bank Account does not Exist",
+      };
+    }
+    // let balance = (
+    //   await hyperwallet.listBalanceForUser({
+    //     userToken: user.hyperwalletToken,
+    //   })
+    // ).data.data;
+    // console.log(balance);
+    // for (let i = 0; i < balance.length; i++) {
+    let transfer = await hyperwallet.transferToBank({
+      userToken: user.hyperwalletToken,
+      amount: amount,
+      transferMethodToken: bankToken,
+    });
+    // }
+    res.status(200).json({
+      status: "success",
+      message: "Amount succesfully transfered to Bank",
+    });
+  } catch (error) {
+    console.log("Transfer Error::::", error);
+    res.status(400).json(error);
+  }
+};
+
 export const processPaymentNonce = async (req, res, next) => {
   try {
-    const { amount, paymentNonce, riderId, currency } = req.body;
+    const { amount, paymentNonce, riderId, currency, orderId } = req.body;
     if (!amount || !paymentNonce) {
       throw {
         status: "fail",
@@ -158,10 +229,10 @@ export const processPaymentNonce = async (req, res, next) => {
       };
     }
     let rider = await getUserById(riderId);
-    if (!rider.hyperwalletToken || !rider.hyperwalletBankToken) {
+    if (!rider.hyperwalletToken) {
       throw {
         status: "fail",
-        message: "User or User Bank Account does not Exist",
+        message: "User Account does not Exist",
       };
     }
     let response = await braintree.pay({ amount, paymentNonce });
@@ -179,13 +250,17 @@ export const processPaymentNonce = async (req, res, next) => {
     console.log("HYPPERWALLET_PAYMENT", rider);
     const payload = {
       amount: amountToTransfer,
-      destinationToken: rider.hyperwalletBankToken,
+      destinationToken: rider.hyperwalletToken,
       currency: currency,
       programToken: env.hyperwallet.programToken,
       purpose: "GP0005",
     };
     console.log("HYPERWALLET_PAYLOAD", payload);
     await hyperwallet.createPayment(payload);
+    let up = Orders.child(orderId);
+    await up.update({
+      status: "COMPLETED",
+    });
     res.status(200).json({
       status: "success",
       message: "Payment Processed successfully",

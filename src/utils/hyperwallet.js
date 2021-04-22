@@ -2,6 +2,7 @@ import Hyperwallet from "hyperwallet-sdk";
 import { env } from "../env";
 import { uuid } from "uuidv4";
 const debug = require("debug")("payment:utils:hyperwallet");
+var rp = require("request-promise");
 
 export const hyperwalletClient = new Hyperwallet({
   username: env.hyperwallet.apiUsername,
@@ -92,7 +93,11 @@ export const createPayment = ({
         if (errors) {
           debug(errors);
           console.log("CREATE PAYMENT ERR::", errors);
-          reject({ status: "fail", message: errors[0].message });
+          reject({
+            status: "fail",
+            message: "Failed to create Payment",
+            errors,
+          });
         } else {
           debug("Payment successfully created");
           debug(body);
@@ -161,7 +166,7 @@ export const createUser = ({ clientId, firstName, lastName, email }) => {
             resolve({ token: userToken });
           }
 
-          reject({ status: "fail", message: errors[0].message });
+          reject({ status: "fail", message: "Failed to create user", errors });
         } else {
           debug("Create User Response");
           resolve({ status: "success", data: body });
@@ -180,7 +185,11 @@ export const getBankAccount = ({ userToken, bankAccountToken }) => {
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject({ status: "fail", message: "Failed to fetch bank account" });
+          reject({
+            status: "fail",
+            message: "Failed to fetch bank account",
+            errors,
+          });
         } else {
           debug("Bank account successfully fetched");
           debug(body);
@@ -214,7 +223,7 @@ export const getUserJwt = (userToken) => {
       function (errors, body) {
         if (errors) {
           debug(errors);
-          reject({ status: "fail", message: "Authentication Failed" });
+          reject({ status: "fail", message: "Authentication Failed", errors });
         } else {
           debug("Get User Response");
           resolve({ status: "success", data: body });
@@ -256,6 +265,7 @@ export const listBankAccounts = ({ userToken }) => {
           reject({
             status: "fail",
             message: "Fetching User bank accounts failed",
+            errors,
           });
         } else {
           debug("User banks fetched successfully");
@@ -279,14 +289,15 @@ export const transferToBank = async ({
     userToken: userToken,
     bankAccountToken: transferMethodToken,
   });
-
+  const user = await getUser({ userToken });
+  console.log(user);
   if (!bankAccount)
     throw new Error({ status: "fail", message: "Invalid transfer method" });
-
+  console.log(bankAccount);
   const transferData = {
-    clientTransferId: uuidV4(),
+    clientTransferId: uuid(),
     destinationAmount: 0.1,
-    destinationCurrency: bankAccount.transferMethodCurrency,
+    destinationCurrency: bankAccount.data.transferMethodCurrency,
     notes: "Partial-Balance Transfer",
     memo: "TransferClientId56387",
     sourceToken: userToken,
@@ -313,15 +324,19 @@ export const transferToBank = async ({
   });
   debug("transferInqRes", transferInqRes);
 
+  console.log("TTR:::::", transferInqRes);
+
   const { foreignExchanges } = JSON.parse(transferInqRes);
   debug("foreignExchanges", foreignExchanges);
+  let amountToTransfer = amount;
+  if (foreignExchanges) {
+    const getUsdRate = foreignExchanges.find(
+      ({ sourceCurrency }) => sourceCurrency === "USD"
+    ).rate;
+    debug("getUsdRate", getUsdRate);
 
-  const getUsdRate = foreignExchanges.find(
-    ({ sourceCurrency }) => sourceCurrency === "USD"
-  ).rate;
-  debug("getUsdRate", getUsdRate);
-
-  const amountToTransfer = parseFloat(getUsdRate * amount).toFixed(2);
+    amountToTransfer = parseFloat(getUsdRate * parseFloat(amount)).toFixed(2);
+  }
   debug("amountToTransfer", amountToTransfer);
 
   const transferRes = await rp({

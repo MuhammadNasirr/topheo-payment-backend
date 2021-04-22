@@ -100,4 +100,16 @@ protectedRouter.get(
   braintreeController.getAuthToken
 );
 
+protectedRouter.get(
+  "/balance/:userId",
+  authMiddleware,
+  braintreeController.getUserBalance
+);
+
+protectedRouter.post(
+  "/transfer",
+  authMiddleware,
+  braintreeController.transferToBank
+);
+
 export { protectedRouter };

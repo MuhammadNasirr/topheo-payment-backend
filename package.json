@@ -32,6 +32,8 @@
     "hyperwallet-sdk": "^1.6.4",
     "jsonwebtoken": "^8.5.1",
     "method-override": "^3.0.0",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
     "twilio": "^3.59.0",
     "uuidv4": "^6.2.7"
   }
