@@ -255,11 +255,7 @@ export const processPaymentNonce = async (req, res, next) => {
       console.log(hyperwalletUser);
       let up = Users.child(riderId);
       await up.update({
-        hyperwalletToken: user.hyperwalletToken,
-        currency: currency,
-        amountInHyperwallet: rider.amountInHyperwallet
-          ? parseFloat(rider.amountInHyperwallet) + parseFloat(amount)
-          : parseFloat(amount),
+        hyperwalletToken: rider.hyperwalletToken,
       });
     }
     let response = await braintree.pay({ amount, paymentNonce });
@@ -287,6 +283,13 @@ export const processPaymentNonce = async (req, res, next) => {
     let up = Orders.child(orderId);
     await up.update({
       status: "COMPLETED",
+    });
+    up = Users.child(riderId);
+    await up.update({
+      currency: currency,
+      amountInHyperwallet: rider.amountInHyperwallet
+        ? parseFloat(rider.amountInHyperwallet) + parseFloat(amount)
+        : parseFloat(amount),
     });
     res.status(200).json({
       status: "success",
