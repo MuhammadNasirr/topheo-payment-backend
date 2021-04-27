@@ -210,7 +210,7 @@ export const transferToBank = async (req, res, next) => {
     });
 
     let up = Users.child(userId);
-    let bal = await hyperwallet.listBalanceForUser(user.hyperwalletToken).data
+    let bal = (await hyperwallet.listBalanceForUser(user.hyperwalletToken)).data
       .data;
     await up.update({
       amountInHyperwallet: bal.length ? bal[0].amount : 0,
@@ -286,8 +286,8 @@ export const processPaymentNonce = async (req, res, next) => {
       status: "COMPLETED",
     });
     up = Users.child(riderId);
-    let bal = await hyperwallet.listBalanceForUser(rider.hyperwalletToken).data
-      .data;
+    let bal = (await hyperwallet.listBalanceForUser(rider.hyperwalletToken))
+      .data.data;
 
     await up.update({
       currency: currency,
