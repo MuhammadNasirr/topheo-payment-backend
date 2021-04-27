@@ -209,10 +209,11 @@ export const transferToBank = async (req, res, next) => {
       transferMethodToken: bankToken,
     });
 
-    let up = Users.child(riderId);
+    let up = Users.child(userId);
+    let bal = await hyperwallet.listBalanceForUser(user.hyperwalletToken).data
+      .data;
     await up.update({
-      amountInHyperwallet:
-        parseFloat(user.amountInHyperwallet) - parseFloat(amount),
+      amountInHyperwallet: bal.length ? bal[0].amount : 0,
     });
     // }
     res.status(200).json({
@@ -285,11 +286,12 @@ export const processPaymentNonce = async (req, res, next) => {
       status: "COMPLETED",
     });
     up = Users.child(riderId);
+    let bal = await hyperwallet.listBalanceForUser(rider.hyperwalletToken).data
+      .data;
+
     await up.update({
       currency: currency,
-      amountInHyperwallet: rider.amountInHyperwallet
-        ? parseFloat(rider.amountInHyperwallet) + parseFloat(amount)
-        : parseFloat(amount),
+      amountInHyperwallet: bal.length ? bal[0].amount : 0,
     });
     res.status(200).json({
       status: "success",
