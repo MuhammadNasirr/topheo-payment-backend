@@ -208,6 +208,12 @@ export const transferToBank = async (req, res, next) => {
       amount: amount,
       transferMethodToken: bankToken,
     });
+
+    let up = Users.child(riderId);
+    await up.update({
+      amountInHyperwallet:
+        parseFloat(user.amountInHyperwallet) - parseFloat(amount),
+    });
     // }
     res.status(200).json({
       status: "success",
@@ -229,11 +235,32 @@ export const processPaymentNonce = async (req, res, next) => {
       };
     }
     let rider = await getUserById(riderId);
+    // console.log(user);
+    let customer = await braintree.findCustomer(riderId);
+    if (!customer)
+      await braintree.createCustomer({
+        id: riderId,
+        firstName: rider.firstname,
+        lastName: rider.lastname,
+        email: rider.email,
+      });
     if (!rider.hyperwalletToken) {
-      throw {
-        status: "fail",
-        message: "User Account does not Exist",
-      };
+      let hyperwalletUser = await hyperwallet.createUser({
+        clientId: riderId,
+        email: rider.email,
+        firstName: rider.firstname,
+        lastName: rider.lastname,
+      });
+      rider.hyperwalletToken = hyperwalletUser.token;
+      console.log(hyperwalletUser);
+      let up = Users.child(riderId);
+      await up.update({
+        hyperwalletToken: user.hyperwalletToken,
+        currency: currency,
+        amountInHyperwallet: rider.amountInHyperwallet
+          ? parseFloat(rider.amountInHyperwallet) + parseFloat(amount)
+          : parseFloat(amount),
+      });
     }
     let response = await braintree.pay({ amount, paymentNonce });
 
