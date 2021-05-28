@@ -1,7 +1,7 @@
 import { ADMIN_FEE } from "../constants";
 import { env } from "../env";
 import * as braintree from "../utils/braintree";
-import { getUserById, Users, Orders } from "../utils/firebase";
+import { getUserById, Users, Orders, getOrderById } from "../utils/firebase";
 import * as hyperwallet from "../utils/hyperwallet";
 
 export const initializePaymentProcess = async (req, res, next) => {
@@ -284,10 +284,20 @@ export const processPaymentNonce = async (req, res, next) => {
     };
     console.log("HYPERWALLET_PAYLOAD", payload);
     await hyperwallet.createPayment(payload);
-    let up = Orders.child(orderId);
-    await up.update({
-      status: "COMPLETED",
-    });
+    let myOrder = await getOrderById(orderId);
+    if (myOrder.receiverStatus === "ACKNOWLEDGE") {
+      let up = Orders.child(orderId);
+      await up.update({
+        status: "COMPLETED",
+      });
+    } else {
+      setTimeout(() => {
+        let up = Orders.child(orderId);
+        await up.update({
+          status: "COMPLETED",
+        });
+      }, 3600 * 24 * 3 * 1000);
+    }
     up = Users.child(riderId);
     let bal = (
       await hyperwallet.listBalanceForUser({

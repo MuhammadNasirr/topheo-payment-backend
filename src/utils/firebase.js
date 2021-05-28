@@ -34,3 +34,26 @@ export const getUserById = (id) => {
       );
   });
 };
+
+export const getOrderById = (id) => {
+  return new Promise((res, rej) => {
+    Orders.orderByKey()
+      .equalTo(id)
+      .on(
+        "value",
+        function (snapshot) {
+          let data = snapshot.toJSON();
+          if (data) {
+            data = data[id];
+          } else {
+            rej({ status: "fail", message: "Order doesnot exist in Database" });
+          }
+          res(data);
+        },
+        function (errorObject) {
+          console.log("The read failed: " + errorObject.code);
+          rej({ status: "fail", message: "Something went wrong" });
+        }
+      );
+  });
+};
