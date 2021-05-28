@@ -300,14 +300,14 @@ export const processPaymentNonce = async (req, res, next) => {
         // }, 3600 * 24 * 3 * 1000);
       }, 60 * 5 * 1000);
     }
-    up = Users.child(riderId);
+    let use = Users.child(riderId);
     let bal = (
       await hyperwallet.listBalanceForUser({
         userToken: rider.hyperwalletToken,
       })
     ).data.data;
 
-    await up.update({
+    await use.update({
       currency: currency,
       amountInHyperwallet: bal.length ? bal[0].amount : 0,
     });

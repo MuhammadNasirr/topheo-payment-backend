@@ -40,5 +40,7 @@ app.all("*", (req, res, next) => {
 app.use(errorHandler);
 
 app.listen(process.env.PORT || 3000, () => {
-  console.log("Authentication service started on port 3000");
+  console.log(
+    "Authentication service started on port " + process.env.PORT || 3000
+  );
 });
