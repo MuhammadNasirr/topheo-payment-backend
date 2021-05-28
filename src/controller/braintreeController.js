@@ -296,7 +296,8 @@ export const processPaymentNonce = async (req, res, next) => {
         await up.update({
           status: "COMPLETED",
         });
-      }, 3600 * 24 * 3 * 1000);
+        // }, 3600 * 24 * 3 * 1000);
+      }, 60 * 5 * 1000);
     }
     up = Users.child(riderId);
     let bal = (
