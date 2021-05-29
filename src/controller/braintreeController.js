@@ -294,12 +294,12 @@ export const processPaymentNonce = async (req, res, next) => {
       let up = Orders.child(orderId);
       up.update({
         status: "PAID",
-        receiverStatus: "ACKNOWLEDGE",
       });
       let timer = setTimeout(() => {
         let up = Orders.child(orderId);
         up.update({
           status: "COMPLETED",
+          receiverStatus: "ACKNOWLEDGE",
         });
         clearTimeout(timer);
         // }, 3600 * 24 * 3 * 1000);
