@@ -3,11 +3,11 @@ import { firebase } from "../utils/firebase";
 function authMiddleware(request, response, next) {
   const headerToken = request.headers.authorization;
   if (!headerToken) {
-    return response.send({ message: "No token provided" }).status(401);
+    return response.status(401).send({ message: "No token provided" });
   }
 
   if (headerToken && headerToken.split(" ")[0] !== "Bearer") {
-    response.send({ message: "Invalid token" }).status(401);
+    response.status(401).send({ message: "Invalid token" }).status(401);
   }
 
   const token = headerToken.split(" ")[1];
@@ -15,7 +15,7 @@ function authMiddleware(request, response, next) {
     .auth()
     .verifyIdToken(token)
     .then(() => next())
-    .catch(() => response.send({ message: "Could not authorize" }).status(403));
+    .catch(() => response.status(403).send({ message: "Could not authorize" }));
 }
 
 export default authMiddleware;
