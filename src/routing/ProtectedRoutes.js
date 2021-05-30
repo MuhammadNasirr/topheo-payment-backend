@@ -88,6 +88,12 @@ protectedRouter.post(
   braintreeController.createBankAccount
 );
 
+protectedRouter.post(
+  "/deliver/isAck",
+  authMiddleware,
+  braintreeController.isAck
+);
+
 protectedRouter.get(
   "/bank/:userId",
   authMiddleware,

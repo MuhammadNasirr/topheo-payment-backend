@@ -229,6 +229,35 @@ export const transferToBank = async (req, res, next) => {
   }
 };
 
+export const isAck = async (req, res, next) => {
+  const { orderId } = req.body;
+  try {
+    let myOrder = await getOrderById(orderId);
+    if (myOrder.receiverStatus === "ACKNOWLEDGE") {
+      res
+        .status(200)
+        .json({ status: "success", message: "Already Acknowledged" });
+    } else {
+      let timer = setTimeout(() => {
+        let up = Orders.child(orderId);
+        up.update({
+          receiverStatus: "ACKNOWLEDGE",
+        });
+        clearTimeout(timer);
+        // }, 3600 * 24 * 3 * 1000);
+      }, 60 * 5 * 1000);
+
+      res.status(200).json({
+        status: "success",
+        message: "Acknowledgement timeout started",
+      });
+    }
+  } catch (error) {
+    console.log("ISACK Error::::", error);
+    res.status(400).json(error);
+  }
+};
+
 export const processPaymentNonce = async (req, res, next) => {
   try {
     const { amount, paymentNonce, riderId, currency, orderId } = req.body;
@@ -285,26 +314,12 @@ export const processPaymentNonce = async (req, res, next) => {
     console.log("HYPERWALLET_PAYLOAD", payload);
     await hyperwallet.createPayment(payload);
     let myOrder = await getOrderById(orderId);
-    if (myOrder.receiverStatus === "ACKNOWLEDGE") {
-      let up = Orders.child(orderId);
-      await up.update({
-        status: "COMPLETED",
-      });
-    } else {
-      let up = Orders.child(orderId);
-      up.update({
-        status: "PAID",
-      });
-      let timer = setTimeout(() => {
-        let up = Orders.child(orderId);
-        up.update({
-          status: "COMPLETED",
-          receiverStatus: "ACKNOWLEDGE",
-        });
-        clearTimeout(timer);
-        // }, 3600 * 24 * 3 * 1000);
-      }, 60 * 5 * 1000);
-    }
+
+    let up = Orders.child(orderId);
+    await up.update({
+      status: "COMPLETED",
+    });
+
     let use = Users.child(riderId);
     let bal = (
       await hyperwallet.listBalanceForUser({
