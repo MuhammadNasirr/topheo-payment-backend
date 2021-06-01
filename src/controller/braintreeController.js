@@ -244,8 +244,8 @@ export const isAck = async (req, res, next) => {
           receiverStatus: "ACKNOWLEDGE",
         });
         clearTimeout(timer);
-        // }, 3600 * 24 * 3 * 1000);
-      }, 60 * 5 * 1000);
+      }, 3600 * 24 * 3 * 1000);
+      // }, 60 * 5 * 1000);
 
       res.status(200).json({
         status: "success",
