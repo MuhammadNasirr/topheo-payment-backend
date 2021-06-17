@@ -3,7 +3,7 @@ import { twilioClient } from "../utils/twilio";
 export const sendSms = async (req, res, next) => {
   try {
     let response = await twilioClient.messages.create({
-      from: "+16505176163",
+      from: "++16672260821",
       to: req.body.to,
       body: req.body.body,
     });
