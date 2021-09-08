@@ -4,7 +4,7 @@ const credentials = require("../../firebase.json");
 export const firebase = admin.initializeApp({
   credential: admin.credential.cert(credentials),
 
-  databaseURL: "https://images-slider.firebaseio.com",
+  databaseURL: "https://topheo-app-default-rtdb.firebaseio.com",
 });
 
 export const db = admin.database();
